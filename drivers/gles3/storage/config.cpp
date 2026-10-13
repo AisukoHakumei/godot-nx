@@ -102,6 +102,10 @@ Config::Config() {
 		float_texture_supported = extensions.has("GL_EXT_color_buffer_float");
 		float_texture_linear_supported = extensions.has("GL_OES_texture_float_linear");
 		etc2_supported = true;
+#ifdef HORIZON_ENABLED
+		// switch-mesa 20.1 nouveau has no native ETC2; mesa would CPU-transcode it. Ship S3TC/BPTC instead.
+		etc2_supported = false;
+#endif
 #if defined(ANDROID_ENABLED) || defined(IOS_ENABLED)
 		// Some Android devices report support for S3TC but we don't expect that and don't export the textures.
 		// This could be fixed but so few devices support it that it doesn't seem useful (and makes bigger APKs).
