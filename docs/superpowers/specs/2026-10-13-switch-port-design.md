@@ -312,10 +312,12 @@ The Switch export preset sets `texture_format/s3tc_bptc = true`,
 - LINKFLAGS: `-specs=$DEVKITPRO/libnx/switch.specs -fPIE -Wl,--gc-sections`.
 - LIBPATH: `$DEVKITPRO/libnx/lib`, `$DEVKITPRO/portlibs/switch/lib`.
 - LIBS in order: `EGL GLESv2 glapi drm_nouveau nx m`.
-- CPPDEFINES: `SWITCH_ENABLED HORIZON_ENABLED UNIX_ENABLED GLES3_ENABLED GLES_API_ENABLED PLATFORM_THREAD_OVERRIDE`.
-  Not defined: `VULKAN_ENABLED`, `RD_ENABLED`, `GLAD_ENABLED`, `EGL_ENABLED`,
-  `CRASH_HANDLER_ENABLED`, `UNIX_SOCKET_UNAVAILABLE` (sockets simply are not
-  registered by `OS_Switch`).
+- CPPDEFINES: `SWITCH_ENABLED HORIZON_ENABLED GLES3_ENABLED GLES_API_ENABLED PLATFORM_THREAD_OVERRIDE`.
+  Not defined: `UNIX_ENABLED` (it would compile `os_unix.cpp`, the Unix
+  sockets and pipes, and the `unix://` debugger peer, none of which link on
+  libnx; the two Unix file drivers are guarded with `HORIZON_ENABLED`
+  instead), `VULKAN_ENABLED`, `RD_ENABLED`, `GLAD_ENABLED`, `EGL_ENABLED`,
+  `CRASH_HANDLER_ENABLED`.
 - Forced options: `opengl3=yes vulkan=no use_volk=no use_sowrap=no builtin_*=yes`.
 - Disabled modules: `mono openxr webxr camera enet upnp webrtc websocket
   mobile_vr`. Everything bundled in `thirdparty/` builds (jolt, text_server_adv,
@@ -325,8 +327,9 @@ The Switch export preset sets `texture_format/s3tc_bptc = true`,
   and `elf2nro` to emit `bin/godot.switch.<target>.arm64.nro` with
   `platform/switch/tools/default_icon.jpg`.
 
-Engine guards: `drivers/unix/file_access_unix.cpp` skips `<sys/xattr.h>` under
-`HORIZON_ENABLED`; `core/os/thread.h` already includes `platform_thread.h`
+Engine guards: `drivers/unix/file_access_unix.cpp` and `dir_access_unix.cpp`
+compile under `UNIX_ENABLED || HORIZON_ENABLED`, and the former skips
+`<sys/xattr.h>` under `HORIZON_ENABLED`; `core/os/thread.h` already includes `platform_thread.h`
 under `PLATFORM_THREAD_OVERRIDE`.
 
 ## 6. Packaging, phase 1
