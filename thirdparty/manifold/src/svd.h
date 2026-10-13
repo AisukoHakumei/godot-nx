@@ -24,6 +24,10 @@
 // Modified from https://github.com/wi-re/tbtSVD, removing CUDA dependence and
 // approximate inverse square roots.
 
+// Godot Switch port: newlib <ctype.h> defines _S, which this file uses as a local name.
+#ifdef _S
+#undef _S
+#endif
 #include <cmath>
 
 #include "manifold/common.h"

@@ -119,6 +119,10 @@ if env["builtin_mbedtls"]:
     ]
 
     thirdparty_dir = "#thirdparty/mbedtls/library/"
+    if env["platform"] == "switch":
+        # net_sockets.c requires a Unix/Windows socket API; Godot never calls mbedtls_net_*.
+        thirdparty_sources.remove("net_sockets.c")
+
     thirdparty_sources = [thirdparty_dir + file for file in thirdparty_sources]
 
     env_mbed_tls.Prepend(CPPPATH=["#thirdparty/mbedtls/include/"])

@@ -52,6 +52,7 @@ def get_flags():
         "vulkan": False,
         "use_volk": False,
         "use_sowrap": False,
+        "builtin_pcre2_with_jit": False,  # sljit needs mmap, which libnx lacks.
         "module_mono_enabled": False,
         "module_openxr_enabled": False,
         "module_webxr_enabled": False,
@@ -61,6 +62,8 @@ def get_flags():
         "module_webrtc_enabled": False,
         "module_websocket_enabled": False,
         "module_mobile_vr_enabled": False,
+        # Embree's NEON emulation does not build with GCC; costs runtime occlusion culling.
+        "module_raycast_enabled": False,
     }
 
 
@@ -85,6 +88,7 @@ def configure(env: "SConsEnvironment"):
     env["STRIP"] = os.path.join(bindir, "aarch64-none-elf-strip")
     env["PROGSUFFIX"] = ".elf"
     env["DEVKITPRO"] = root
+    env["ENV"]["DEVKITPRO"] = root  # switch.specs resolves %:getenv(DEVKITPRO) at link time.
 
     env.Append(
         CCFLAGS=[

@@ -147,6 +147,10 @@ thirdparty_sources = [thirdparty_dir + file for file in thirdparty_sources]
 
 env_jolt.Prepend(CPPPATH=[thirdparty_dir])
 
+if env["platform"] == "switch":
+    # Jolt has no Horizon detection; the BSD branch (pthread semaphores, no prctl) fits libnx.
+    env_jolt.Append(CPPDEFINES=["JPH_PLATFORM_BSD"])
+
 if env.dev_build:
     env_jolt.Append(CPPDEFINES=["JPH_ENABLE_ASSERTS"])
 

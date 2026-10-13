@@ -58,6 +58,11 @@
 
 // Custom entropy source.
 #define MBEDTLS_NO_PLATFORM_ENTROPY
+
+#ifdef __SWITCH__
+// mbedtls has no millisecond clock for Horizon; the port supplies mbedtls_ms_time() (modules/mbedtls/mbedtls_ms_time_switch.cpp).
+#define MBEDTLS_PLATFORM_MS_TIME_ALT
+#endif
 #define MBEDTLS_ENTROPY_HARDWARE_ALT
 
 #if !(defined(__linux__) && defined(__aarch64__))
