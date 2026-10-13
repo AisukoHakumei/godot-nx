@@ -9,6 +9,9 @@
 #include "core/input/input.h"
 #include "servers/display/display_server.h"
 
+// libnx applet hook cookie, kept opaque here so this header stays libnx-free.
+struct AppletHookCookie;
+
 // Single fixed window on the console. Owns the GL manager and, later, the
 // joypad poller. Applet hooks only set flags; process_events() acts on them
 // from the engine thread.
@@ -24,12 +27,15 @@ class DisplayServerSwitch : public DisplayServer {
 	Callable input_text_callback;
 	Callable rect_changed_callback;
 
+	AppletHookCookie *hook_cookie = nullptr;
+
 	SafeFlag resize_pending;
 	SafeFlag focus_event_pending;
 	SafeFlag focus_pending_value;
 	SafeFlag resume_pending;
 
 	bool _is_docked() const;
+
 
 	template <typename... Args>
 	void _window_callback(const Callable &p_callable, bool p_deferred, const Args &...p_rest_args) const;

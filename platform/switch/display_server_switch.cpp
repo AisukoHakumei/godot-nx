@@ -17,6 +17,24 @@ bool DisplayServerSwitch::_is_docked() const {
 	return appletGetOperationMode() == AppletOperationMode_Console;
 }
 
+// Runs on libnx's applet message thread: only sets flags; process_events() acts on them.
+static void _switch_applet_hook(AppletHookType p_hook, void *p_param) {
+	DisplayServerSwitch *ds = static_cast<DisplayServerSwitch *>(p_param);
+	switch (p_hook) {
+		case AppletHookType_OnOperationMode:
+			ds->set_resize_pending();
+			break;
+		case AppletHookType_OnFocusState:
+			ds->set_focus_pending(appletGetFocusState() == AppletFocusState_InFocus);
+			break;
+		case AppletHookType_OnResume:
+			ds->set_resume_pending();
+			break;
+		default:
+			break;
+	}
+}
+
 // Registration.
 
 Vector<String> DisplayServerSwitch::get_rendering_drivers_func() {
@@ -310,10 +328,18 @@ DisplayServerSwitch::DisplayServerSwitch(const String &p_rendering_driver, Displ
 
 	Input::get_singleton()->set_event_dispatch_function(_dispatch_input_events);
 
+	hook_cookie = memnew(AppletHookCookie);
+	appletHook(hook_cookie, _switch_applet_hook, this);
+
 	r_error = OK;
 }
 
 DisplayServerSwitch::~DisplayServerSwitch() {
+	if (hook_cookie) {
+		appletUnhook(hook_cookie);
+		memdelete(hook_cookie);
+		hook_cookie = nullptr;
+	}
 	if (gl_initialized) {
 		gl_manager.finalize();
 	}
