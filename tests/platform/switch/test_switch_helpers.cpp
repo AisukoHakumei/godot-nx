@@ -18,6 +18,8 @@ TEST_CASE("[SwitchHelpers] window size follows dock state") {
 TEST_CASE("[SwitchHelpers] executable path falls back when argv0 is empty") {
 	CHECK(SwitchHelpers::executable_path("", "sdmc:/") == "sdmc:/game.nro");
 	CHECK(SwitchHelpers::executable_path("sdmc:/switch/mygame/mygame.nro", "sdmc:/") == "sdmc:/switch/mygame/mygame.nro");
+	// Eden passes "homebrew" as argv[0]; anything without a directory falls back too.
+	CHECK(SwitchHelpers::executable_path("homebrew", "sdmc:/") == "sdmc:/game.nro");
 	CHECK(SwitchHelpers::user_dir_for_executable("sdmc:/switch/mygame/mygame.nro") == "sdmc:/switch/mygame/user");
 }
 
@@ -63,6 +65,14 @@ TEST_CASE("[SwitchHelpers] missing pck message lists every candidate") {
 TEST_CASE("[SwitchHelpers] audout buffer sizing") {
 	CHECK(SwitchHelpers::audout_buffer_bytes(480) == 1920);
 	CHECK(SwitchHelpers::audout_block_bytes() == 4096);
+}
+
+TEST_CASE("[SwitchHelpers] explicit --main-pack argument wins") {
+	const char *argv1[] = { "--verbose", "--main-pack", "sdmc:/switch/x/x.pck", "--fixed-fps", "30" };
+	CHECK(SwitchHelpers::main_pack_from_args(5, argv1) == "sdmc:/switch/x/x.pck");
+	const char *argv2[] = { "--verbose", "--main-pack" };
+	CHECK(SwitchHelpers::main_pack_from_args(2, argv2) == "");
+	CHECK(SwitchHelpers::main_pack_from_args(0, nullptr) == "");
 }
 
 } // namespace TestSwitchHelpers

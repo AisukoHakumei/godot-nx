@@ -65,29 +65,51 @@ int main(int argc, char **argv) {
 	// Find the project data here, where a console message is still possible,
 	// and hand it to the engine as --main-pack so this search is the only one.
 	// Plain stdio: Godot's FileAccess is not set up until Main::setup().
+	const int user_argc = argc > 1 ? argc - 1 : 0;
+	const char **user_argv = argc > 1 ? (const char **)&argv[1] : nullptr;
+	const String explicit_pack = SwitchHelpers::main_pack_from_args(user_argc, user_argv);
+
 	CharString pck_path;
-	for (const String &candidate : SwitchHelpers::pck_candidates(os.get_executable_path(), os.get_start_cwd())) {
-		CharString c = candidate.utf8();
+	if (!explicit_pack.is_empty()) {
+		CharString c = explicit_pack.utf8();
 		FILE *f = fopen(c.get_data(), "rb");
 		if (f) {
 			fclose(f);
 			pck_path = c;
-			break;
+		}
+		if (pck_path.length() == 0) {
+			String msg = "No game data found. --main-pack names a missing file:\n" + explicit_pack;
+			fprintf(stderr, "%s\n", msg.utf8().get_data());
+			switch_show_blocking_message(msg);
+			return EXIT_FAILURE;
+		}
+	} else {
+		for (const String &candidate : SwitchHelpers::pck_candidates(os.get_executable_path(), os.get_start_cwd())) {
+			CharString c = candidate.utf8();
+			FILE *f = fopen(c.get_data(), "rb");
+			if (f) {
+				fclose(f);
+				pck_path = c;
+				break;
+			}
+		}
+		if (pck_path.length() == 0) {
+			String msg = SwitchHelpers::missing_pck_message(os.get_executable_path(), os.get_start_cwd());
+			fprintf(stderr, "%s\n", msg.utf8().get_data());
+			switch_show_blocking_message(msg);
+			return EXIT_FAILURE;
 		}
 	}
-	if (pck_path.length() == 0) {
-		String msg = SwitchHelpers::missing_pck_message(os.get_executable_path(), os.get_start_cwd());
-		fprintf(stderr, "%s\n", msg.utf8().get_data());
-		switch_show_blocking_message(msg);
-		return EXIT_FAILURE;
-	}
 
-	// argv for Main::setup: --main-pack <pck> followed by the user's arguments.
+	// argv for Main::setup: the user's arguments, with --main-pack <pck> prepended
+	// unless the user already supplied one.
 	CharString exec_path_utf8 = os.get_executable_path().utf8();
 	static char main_pack_flag[] = "--main-pack";
 	Vector<char *> engine_argv;
-	engine_argv.push_back(main_pack_flag);
-	engine_argv.push_back(pck_path.ptrw());
+	if (explicit_pack.is_empty()) {
+		engine_argv.push_back(main_pack_flag);
+		engine_argv.push_back(pck_path.ptrw());
+	}
 	for (int i = 1; i < argc; i++) {
 		engine_argv.push_back(argv[i]);
 	}

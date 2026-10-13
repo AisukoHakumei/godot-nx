@@ -12,6 +12,8 @@
 #include "core/string/ustring.h"
 #include "core/templates/vector.h"
 
+#include <cstring>
+
 namespace SwitchHelpers {
 
 // Native touch panel resolution reported by libnx regardless of dock state.
@@ -26,8 +28,24 @@ static inline String fallback_executable_path(const String &p_cwd) {
 	return p_cwd.path_join("game.nro");
 }
 
+// argv[0] is the NRO path under hbmenu/nxlink, empty under some emulators,
+// and the literal "homebrew" under Eden; only a value with a directory is usable.
 static inline String executable_path(const String &p_argv0, const String &p_cwd) {
-	return p_argv0.is_empty() ? fallback_executable_path(p_cwd) : p_argv0;
+	if (p_argv0.is_empty() || !p_argv0.contains("/")) {
+		return fallback_executable_path(p_cwd);
+	}
+	return p_argv0;
+}
+
+// The value following an explicit "--main-pack" in the arguments after argv[0],
+// or empty. Lets an emulator launch name the pck directly.
+static inline String main_pack_from_args(int p_argc, const char **p_argv) {
+	for (int i = 0; i + 1 < p_argc; i++) {
+		if (p_argv[i] && strcmp(p_argv[i], "--main-pack") == 0 && p_argv[i + 1]) {
+			return String::utf8(p_argv[i + 1]);
+		}
+	}
+	return String();
 }
 
 static inline String user_dir_for_executable(const String &p_exec_path) {
