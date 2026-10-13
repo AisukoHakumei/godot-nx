@@ -7,6 +7,7 @@
 #include "switch_wrapper.h"
 
 #include "core/config/project_settings.h"
+#include "core/input/input_event.h"
 #include "drivers/gles3/rasterizer_gles3.h"
 
 DisplayServerSwitch *DisplayServerSwitch::get_singleton() {
@@ -300,7 +301,56 @@ void DisplayServerSwitch::process_events() {
 		send_window_event(focused ? DisplayServerEnums::WINDOW_EVENT_FOCUS_IN : DisplayServerEnums::WINDOW_EVENT_FOCUS_OUT);
 	}
 
+	if (joypad) {
+		joypad->process();
+	}
+
 	Input::get_singleton()->flush_buffered_events();
+}
+
+// On-screen keyboard: the system swkbd applet, shown synchronously.
+
+void DisplayServerSwitch::virtual_keyboard_show(const String &p_existing_text, const Rect2 &p_screen_rect, DisplayServerEnums::VirtualKeyboardType p_type, int p_max_length, int p_cursor_start, int p_cursor_end) {
+	SwkbdConfig kbd;
+	if (R_FAILED(swkbdCreate(&kbd, 0))) {
+		WARN_PRINT("swkbdCreate failed; no on-screen keyboard.");
+		return;
+	}
+	swkbdConfigMakePresetDefault(&kbd);
+	CharString existing = p_existing_text.utf8();
+	swkbdConfigSetInitialText(&kbd, existing.get_data());
+	if (p_max_length > 0) {
+		swkbdConfigSetStringLenMax(&kbd, p_max_length);
+	}
+
+	char out[2048] = {};
+	Result rc = swkbdShow(&kbd, out, sizeof(out));
+	swkbdClose(&kbd);
+	if (R_FAILED(rc)) {
+		return; // Cancelled.
+	}
+
+	// Replace the existing text: erase it, then commit the result.
+	for (int i = 0; i < p_existing_text.length(); i++) {
+		Ref<InputEventKey> down;
+		down.instantiate();
+		down->set_window_id(DisplayServerEnums::MAIN_WINDOW_ID);
+		down->set_keycode(Key::BACKSPACE);
+		down->set_physical_keycode(Key::BACKSPACE);
+		down->set_pressed(true);
+		Input::get_singleton()->parse_input_event(down);
+		Ref<InputEventKey> up = down->duplicate();
+		up->set_pressed(false);
+		Input::get_singleton()->parse_input_event(up);
+	}
+	send_input_text(String::utf8(out));
+}
+
+void DisplayServerSwitch::virtual_keyboard_hide() {
+}
+
+int DisplayServerSwitch::virtual_keyboard_get_height() const {
+	return 0;
 }
 
 void DisplayServerSwitch::swap_buffers() {
@@ -328,6 +378,8 @@ DisplayServerSwitch::DisplayServerSwitch(const String &p_rendering_driver, Displ
 
 	Input::get_singleton()->set_event_dispatch_function(_dispatch_input_events);
 
+	joypad = memnew(JoypadSwitch(Input::get_singleton()));
+
 	hook_cookie = memnew(AppletHookCookie);
 	appletHook(hook_cookie, _switch_applet_hook, this);
 
@@ -335,6 +387,10 @@ DisplayServerSwitch::DisplayServerSwitch(const String &p_rendering_driver, Displ
 }
 
 DisplayServerSwitch::~DisplayServerSwitch() {
+	if (joypad) {
+		memdelete(joypad);
+		joypad = nullptr;
+	}
 	if (hook_cookie) {
 		appletUnhook(hook_cookie);
 		memdelete(hook_cookie);

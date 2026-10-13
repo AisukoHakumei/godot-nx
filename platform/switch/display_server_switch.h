@@ -5,6 +5,7 @@
 #pragma once
 
 #include "gl_manager_switch.h"
+#include "joypad_switch.h"
 
 #include "core/input/input.h"
 #include "servers/display/display_server.h"
@@ -20,6 +21,7 @@ class DisplayServerSwitch : public DisplayServer {
 
 	GLManagerSwitch gl_manager;
 	bool gl_initialized = false;
+	JoypadSwitch *joypad = nullptr;
 
 	ObjectID window_attached_instance_id;
 	Callable window_event_callback;
@@ -115,6 +117,10 @@ public:
 
 	virtual void window_set_vsync_mode(DisplayServerEnums::VSyncMode p_vsync_mode, DisplayServerEnums::WindowID p_window = DisplayServerEnums::MAIN_WINDOW_ID) override;
 	virtual DisplayServerEnums::VSyncMode window_get_vsync_mode(DisplayServerEnums::WindowID p_window = DisplayServerEnums::MAIN_WINDOW_ID) const override;
+
+	virtual void virtual_keyboard_show(const String &p_existing_text, const Rect2 &p_screen_rect = Rect2(), DisplayServerEnums::VirtualKeyboardType p_type = DisplayServerEnums::KEYBOARD_TYPE_DEFAULT, int p_max_length = -1, int p_cursor_start = -1, int p_cursor_end = -1) override;
+	virtual void virtual_keyboard_hide() override;
+	virtual int virtual_keyboard_get_height() const override;
 
 	virtual void process_events() override;
 	virtual void swap_buffers() override;
