@@ -9,6 +9,8 @@
 
 #include "core/config/project_settings.h"
 #include "core/input/input_event.h"
+#include "core/os/main_loop.h"
+#include "core/os/os.h"
 #include "drivers/gles3/rasterizer_gles3.h"
 
 DisplayServerSwitch *DisplayServerSwitch::get_singleton() {
@@ -303,6 +305,10 @@ void DisplayServerSwitch::process_events() {
 			AudioDriverSwitch::get_singleton()->set_paused(!focused);
 		}
 		send_window_event(focused ? DisplayServerEnums::WINDOW_EVENT_FOCUS_IN : DisplayServerEnums::WINDOW_EVENT_FOCUS_OUT);
+		MainLoop *main_loop = OS::get_singleton()->get_main_loop();
+		if (main_loop) {
+			main_loop->notification(focused ? MainLoop::NOTIFICATION_APPLICATION_FOCUS_IN : MainLoop::NOTIFICATION_APPLICATION_FOCUS_OUT);
+		}
 	}
 
 	if (joypad) {
@@ -334,19 +340,8 @@ void DisplayServerSwitch::virtual_keyboard_show(const String &p_existing_text, c
 		return; // Cancelled.
 	}
 
-	// Replace the existing text: erase it, then commit the result.
-	for (int i = 0; i < p_existing_text.length(); i++) {
-		Ref<InputEventKey> down;
-		down.instantiate();
-		down->set_window_id(DisplayServerEnums::MAIN_WINDOW_ID);
-		down->set_keycode(Key::BACKSPACE);
-		down->set_physical_keycode(Key::BACKSPACE);
-		down->set_pressed(true);
-		Input::get_singleton()->parse_input_event(down);
-		Ref<InputEventKey> up = down->duplicate();
-		up->set_pressed(false);
-		Input::get_singleton()->parse_input_event(up);
-	}
+	// swkbd edited the full string (initial text was supplied), and the
+	// input-text callback replaces the focused control's text wholesale.
 	send_input_text(String::utf8(out));
 }
 

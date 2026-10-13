@@ -28,6 +28,7 @@ public:
 
 	void set_argv0(const char *p_argv0);
 	String get_argv0() const { return argv0; }
+	String get_start_cwd() const { return start_cwd; }
 	void set_user_dir_writable(bool p_writable) { user_dir_writable = p_writable; }
 	bool is_user_dir_writable() const { return user_dir_writable; }
 

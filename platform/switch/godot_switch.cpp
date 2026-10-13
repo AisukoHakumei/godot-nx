@@ -18,7 +18,8 @@ static constexpr size_t ENGINE_THREAD_STACK_BYTES = 8 * 1024 * 1024;
 
 struct EngineArgs {
 	OS_Switch *os = nullptr;
-	int argc = 0;
+	const char *exec_path = "";
+	int argc = 0; // Arguments after the executable path.
 	char **argv = nullptr;
 	int exit_code = EXIT_SUCCESS;
 };
@@ -26,8 +27,7 @@ struct EngineArgs {
 static void *engine_main(void *p_arg) {
 	EngineArgs *args = static_cast<EngineArgs *>(p_arg);
 
-	const char *exec_path = args->argc > 0 ? args->argv[0] : "";
-	Error err = Main::setup(exec_path, args->argc > 0 ? args->argc - 1 : 0, args->argc > 0 ? &args->argv[1] : nullptr);
+	Error err = Main::setup(args->exec_path, args->argc, args->argv);
 	if (err != OK) {
 		args->exit_code = (err == ERR_HELP) ? EXIT_SUCCESS : EXIT_FAILURE;
 		return nullptr;
@@ -62,30 +62,41 @@ int main(int argc, char **argv) {
 		return EXIT_SUCCESS;
 	}
 
-	// Explain a missing .pck here, where a console message is still possible.
+	// Find the project data here, where a console message is still possible,
+	// and hand it to the engine as --main-pack so this search is the only one.
 	// Plain stdio: Godot's FileAccess is not set up until Main::setup().
-	{
-		bool found = false;
-		for (const String &candidate : SwitchHelpers::pck_candidates(os.get_executable_path())) {
-			FILE *f = fopen(candidate.utf8().get_data(), "rb");
-			if (f) {
-				fclose(f);
-				found = true;
-				break;
-			}
+	CharString pck_path;
+	for (const String &candidate : SwitchHelpers::pck_candidates(os.get_executable_path(), os.get_start_cwd())) {
+		CharString c = candidate.utf8();
+		FILE *f = fopen(c.get_data(), "rb");
+		if (f) {
+			fclose(f);
+			pck_path = c;
+			break;
 		}
-		if (!found) {
-			String msg = SwitchHelpers::missing_pck_message(os.get_executable_path());
-			fprintf(stderr, "%s\n", msg.utf8().get_data());
-			switch_show_blocking_message(msg);
-			return EXIT_FAILURE;
-		}
+	}
+	if (pck_path.length() == 0) {
+		String msg = SwitchHelpers::missing_pck_message(os.get_executable_path(), os.get_start_cwd());
+		fprintf(stderr, "%s\n", msg.utf8().get_data());
+		switch_show_blocking_message(msg);
+		return EXIT_FAILURE;
+	}
+
+	// argv for Main::setup: --main-pack <pck> followed by the user's arguments.
+	CharString exec_path_utf8 = os.get_executable_path().utf8();
+	static char main_pack_flag[] = "--main-pack";
+	Vector<char *> engine_argv;
+	engine_argv.push_back(main_pack_flag);
+	engine_argv.push_back(pck_path.ptrw());
+	for (int i = 1; i < argc; i++) {
+		engine_argv.push_back(argv[i]);
 	}
 
 	EngineArgs args;
 	args.os = &os;
-	args.argc = argc;
-	args.argv = argv;
+	args.exec_path = exec_path_utf8.get_data();
+	args.argc = engine_argv.size();
+	args.argv = engine_argv.ptrw();
 
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);

@@ -34,18 +34,34 @@ static inline String user_dir_for_executable(const String &p_exec_path) {
 	return p_exec_path.get_base_dir().path_join("user");
 }
 
-// The names ProjectSettings::_setup tries next to the executable, in order.
-static inline Vector<String> pck_candidates(const String &p_exec_path) {
+// Where the template looks for project data, in order: the names
+// ProjectSettings::_setup tries beside the executable, the same names in the
+// working directory, then a fixed game.pck in the working directory. The first
+// hit is passed to the engine as --main-pack so the search here is the truth.
+static inline Vector<String> pck_candidates(const String &p_exec_path, const String &p_cwd) {
 	Vector<String> out;
-	out.push_back(p_exec_path.get_basename() + ".pck");
-	out.push_back(p_exec_path + ".pck");
+	const String exec_dir = p_exec_path.get_base_dir();
+	const String base = p_exec_path.get_file().get_basename();
+	const String file = p_exec_path.get_file();
+	const String names[] = {
+		exec_dir.path_join(base + ".pck"),
+		exec_dir.path_join(file + ".pck"),
+		p_cwd.path_join(base + ".pck"),
+		p_cwd.path_join(file + ".pck"),
+		p_cwd.path_join("game.pck"),
+	};
+	for (const String &n : names) {
+		if (!out.has(n)) {
+			out.push_back(n);
+		}
+	}
 	return out;
 }
 
 // Text for the pre-renderer screen shown when no project data is found.
-static inline String missing_pck_message(const String &p_exec_path) {
+static inline String missing_pck_message(const String &p_exec_path, const String &p_cwd) {
 	String msg = "No game data found. Looked for:";
-	for (const String &c : pck_candidates(p_exec_path)) {
+	for (const String &c : pck_candidates(p_exec_path, p_cwd)) {
 		msg += "\n" + c;
 	}
 	return msg;

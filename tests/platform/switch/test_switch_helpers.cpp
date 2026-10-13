@@ -21,11 +21,20 @@ TEST_CASE("[SwitchHelpers] executable path falls back when argv0 is empty") {
 	CHECK(SwitchHelpers::user_dir_for_executable("sdmc:/switch/mygame/mygame.nro") == "sdmc:/switch/mygame/user");
 }
 
-TEST_CASE("[SwitchHelpers] pck candidates list both names") {
-	Vector<String> c = SwitchHelpers::pck_candidates("sdmc:/switch/mygame/mygame.nro");
-	CHECK(c.size() == 2);
+TEST_CASE("[SwitchHelpers] pck candidates mirror ProjectSettings and add cwd/game.pck") {
+	Vector<String> c = SwitchHelpers::pck_candidates("sdmc:/switch/mygame/mygame.nro", "sdmc:/switch");
+	CHECK(c.size() == 5);
 	CHECK(c[0] == "sdmc:/switch/mygame/mygame.pck");
 	CHECK(c[1] == "sdmc:/switch/mygame/mygame.nro.pck");
+	CHECK(c[2] == "sdmc:/switch/mygame.pck");
+	CHECK(c[3] == "sdmc:/switch/mygame.nro.pck");
+	CHECK(c[4] == "sdmc:/switch/game.pck");
+}
+
+TEST_CASE("[SwitchHelpers] pck candidates deduplicate when cwd is the NRO folder") {
+	Vector<String> c = SwitchHelpers::pck_candidates("sdmc:/switch/mygame/mygame.nro", "sdmc:/switch/mygame");
+	CHECK(c.size() == 3);
+	CHECK(c[2] == "sdmc:/switch/mygame/game.pck");
 }
 
 TEST_CASE("[SwitchHelpers] touch scales to docked window without overflow") {
@@ -44,9 +53,10 @@ TEST_CASE("[SwitchHelpers] stick and sample conversion") {
 }
 
 TEST_CASE("[SwitchHelpers] missing pck message lists every candidate") {
-	String msg = SwitchHelpers::missing_pck_message("sdmc:/switch/mygame/mygame.nro");
+	String msg = SwitchHelpers::missing_pck_message("sdmc:/switch/mygame/mygame.nro", "sdmc:/");
 	CHECK(msg.contains("sdmc:/switch/mygame/mygame.pck"));
 	CHECK(msg.contains("sdmc:/switch/mygame/mygame.nro.pck"));
+	CHECK(msg.contains("sdmc:/game.pck"));
 	CHECK(msg.begins_with("No game data found."));
 }
 

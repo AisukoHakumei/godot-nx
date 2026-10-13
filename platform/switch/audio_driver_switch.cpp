@@ -106,15 +106,19 @@ void AudioDriverSwitch::_thread_func(void *p_udata) {
 		AudioOutBuffer *released = nullptr;
 		u32 count = 0;
 		Result rc = audoutWaitPlayFinish(&released, &count, WAIT_TIMEOUT_NS);
-		if (R_FAILED(rc) || count == 0 || released == nullptr) {
-			continue; // Timeout (device change, sleep): try again, never block under lock().
+		// On timeout (device change, sleep) just try again; never block under lock().
+		// The service hands back one buffer per call, so drain until none remain:
+		// after a pause or a stall several are released at once and all must be
+		// refilled or the queue depth stays reduced for good.
+		while (R_SUCCEEDED(rc) && count > 0 && released != nullptr && !ad->exit_thread.is_set()) {
+			int index = int(released - ad->impl->buffers);
+			if (index >= 0 && index < BUFFER_COUNT) {
+				ad->_fill_and_append(index);
+			}
+			released = nullptr;
+			count = 0;
+			rc = audoutGetReleasedAudioOutBuffer(&released, &count);
 		}
-
-		int index = int(released - ad->impl->buffers);
-		if (index < 0 || index >= BUFFER_COUNT) {
-			continue;
-		}
-		ad->_fill_and_append(index);
 	}
 }
 
