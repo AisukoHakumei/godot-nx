@@ -36,6 +36,10 @@ _Avoid_: driver, graphics backend
 The two ways homebrew can be launched: as a full application (via title override, full RAM) or as an applet (via the album, restricted RAM). Memory budgets differ sharply.
 _Avoid_: full mode, hbmenu mode
 
+**Engine thread**:
+The 8 MiB thread `main()` spawns to run Godot's setup, main loop, and cleanup, because the hbloader main thread is fixed at 1 MiB.
+_Avoid_: main thread, game thread
+
 **Docked / Handheld**:
 The console's two display modes (1080p on TV, 720p on the built-in screen); a running NRO must survive switching between them.
 _Avoid_: TV mode, portable mode

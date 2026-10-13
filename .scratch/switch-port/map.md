@@ -21,6 +21,7 @@ A design spec at `.scratch/switch-port/spec.md` for a `platform/switch` port of 
   - Project data: `.pck` beside the NRO on `sdmc:/switch/<game>/` for the first milestone; romfs embedding is fog for the export preset.
   - Packaging: phase 1 is a script around `elf2nro`; an editor `EditorExportPlatform` is a later phase inside the spec.
   - First milestone lifecycle: docked/handheld resolution changes only. Sockets, sleep/resume are fog.
+  - Shipped games run in **application mode** (title override or forwarder); applet mode is a development convenience, never a design target. Don't tune for the 507 MiB applet pool.
   - Testing: Eden emulator on the Windows host for iteration, real hardware (Atmosphère + nxlink) as ground truth.
   - Debugging: `nxlink` stdout redirection in scope; GDB stub is fog.
   - CI: a minimal build-only GitHub Actions job on the `devkitpro/devkita64` container, as a later phase of the spec.
@@ -28,6 +29,7 @@ A design spec at `.scratch/switch-port/spec.md` for a `platform/switch` port of 
 ## Decisions so far
 
 <!-- one line per resolved ticket: [title](issues/NN-slug.md): gist -->
+- [Platform layer shape for the first milestone](issues/08-platform-layer-shape.md): `OS_Switch : OS` (not `OS_Unix`), engine on its own 8 MiB thread, 1 MiB default worker stacks via `PLATFORM_THREAD_OVERRIDE`, `DisplayServerSwitch` owns touch, swkbd and `JoypadSwitch`, Switch-specific GL manager, Unix file/dir drivers with `SWITCH_ENABLED` guards, process family stubbed except `create_process` → `envSetNextLoad`; applet mode warns and continues.
 - [Install the devkitPro Switch portlibs](issues/02-install-portlibs.md): `switch-mesa 20.1.0-5`, `switch-glad`, `switch-libdrm_nouveau` installed via system `pacman`; link flags `-lEGL -ldrm_nouveau -lGLESv2 -lglapi` plus `-lnx`; SCons 4.11.1 at `~/.local/bin`.
 - [Create the `switch-4.7` branch from `4.7.2-stable`](issues/01-branch-switch-4-7.md): branch exists at upstream tag commit `ed1daf0bf0`; tracker committed on it; SCons registers any `platform/<name>/detect.py` whose `can_build()` passes; `scons` itself is not installed yet.
 - [Emulator for fast iteration](issues/07-emulator-pick.md): Eden (v0.2.1+ from git.eden-emu.dev), run on the Windows host not WSL2; pass `-p "<arg>"` to get libnx argv; no emulator does nxlink (use `svcOutputDebugString` logs); emulators run NROs in application mode while hbmenu on hardware runs applet mode, so memory behaviour differs. Findings in [research/07-emulator.md](research/07-emulator.md).
@@ -38,11 +40,10 @@ A design spec at `.scratch/switch-port/spec.md` for a `platform/switch` port of 
 
 ## Not yet specified
 
-- **Editor export preset**: `EditorExportPlatform` for Switch (NACP title/author/version, icon, `elf2nro`, romfs embedding of the `.pck`). Sharpens once packaging phase 1 and project-data loading are decided.
+- **Editor export preset**: `EditorExportPlatform` for Switch (NACP title/author/version, icon, `elf2nro`, romfs embedding of the `.pck`), and the application-mode launch path for shipped games (hbmenu title override vs an installable forwarder). Sharpens once packaging phase 1 and project-data loading are decided.
 - **Networking**: `socketInitialize`/`nifm` wiring into Godot's `NetSocket`, when the network stack enters a later milestone.
 - **Sleep/resume and applet focus**: `appletHook` events (focus loss, suspend, performance mode) mapped to `MainLoop` notifications. Depends on the platform-layer shape.
 - **3D milestone**: which GLES3 renderer features break on mesa 20.1 nouveau (no program binaries, no ASTC/ETC2, timer queries, TGSI-only shader compiler) once the 2D milestone runs. Depends on the hello-triangle prototype.
-- **Memory budget**: with the runtime facts known (app pool ~3285 MiB, applet pool 507 MiB, heap via hbloader `OverrideHeap`), what the first milestone does when launched in applet mode: refuse with a message (Stary2001's guard), or run with reduced caches. Sharpens with the platform-layer shape.
 - **Crash handling**: Atmosphère fatal reports, symbolization of aarch64 ELF backtraces, GDB stub over nxlink.
 - **GDExtension**: no `dlopen` on homebrew; decide static-only policy and what that means for the export pipeline.
 - **Extras**: rumble (`hidSendVibrationValues`), system language via `setGetSystemLanguage`, save data location, profiler over nxlink, CI job details.

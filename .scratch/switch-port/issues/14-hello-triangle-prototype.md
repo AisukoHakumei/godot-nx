@@ -11,3 +11,4 @@ Does a minimal NRO, built with the exact compiler/linker flags and link order th
 
 Context: the GPU-stack research names specific things to probe beyond the triangle: GL timer queries (`TODO: Support queries` stub in the devkitPro patch), `eglQuerySurface` width/height returning 0, `GL_NUM_PROGRAM_BINARY_FORMATS`, and whether an ES 3.x context or a GL 4.3 core context is the better host for Godot's GLES3 shaders; see [research/05-gpu-stack.md](../research/05-gpu-stack.md).
 Context: run on Eden (Windows host, `-p` non-empty) and on hardware via nxlink; the emulator runs in application mode and hardware via hbmenu in applet mode, so test both memory situations; see [research/07-emulator.md](../research/07-emulator.md).
+Context: the platform-layer ticket decided the engine runs on a spawned 8 MiB pthread, not the libnx main thread; the prototype must make its EGL, applet (`appletMainLoop`, `appletHook`), and HID calls from such a thread to validate that.
