@@ -8,6 +8,8 @@ extends Node3D
 
 var tone_playback: AudioStreamGeneratorPlayback
 var tone_phase := 0.0
+var boot_count := 0
+const SAVE_PATH := "user://save.json"
 
 var elapsed := 0.0
 
@@ -23,6 +25,9 @@ func _ready() -> void:
 	mat.albedo_texture = ImageTexture.create_from_image(img)
 	print("Video adapter: ", RenderingServer.get_video_adapter_name(), " / ", RenderingServer.get_video_adapter_api_version())
 	print("Window: ", DisplayServer.window_get_size(), " locale: ", OS.get_locale())
+	boot_count = _load_count() + 1
+	_save_count(boot_count)
+	print("Boot count ", boot_count, " saved to ", ProjectSettings.globalize_path(SAVE_PATH))
 	tone.play()
 	tone_playback = tone.get_stream_playback()
 	print("Audio driver: ", AudioServer.get_driver_name(), " mix rate ", AudioServer.get_mix_rate())
@@ -33,7 +38,7 @@ func _process(delta: float) -> void:
 	box.rotation.y = elapsed
 	box.rotation.x = elapsed * 0.3
 	_fill_tone()
-	label.text = "FPS %d  window %s  frame %.1f ms" % [Engine.get_frames_per_second(), DisplayServer.window_get_size(), delta * 1000.0]
+	label.text = "FPS %d  window %s  frame %.1f ms  boots %d" % [Engine.get_frames_per_second(), DisplayServer.window_get_size(), delta * 1000.0, boot_count]
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -69,3 +74,19 @@ func _fill_tone() -> void:
 		tone_phase = fmod(tone_phase + 440.0 / 48000.0, 1.0)
 		var v := sin(TAU * tone_phase)
 		tone_playback.push_frame(Vector2(v, v))
+
+
+func _load_count() -> int:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return 0
+	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var data = JSON.parse_string(f.get_as_text())
+	return int(data.get("boots", 0)) if data is Dictionary else 0
+
+
+func _save_count(count: int) -> void:
+	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if f == null:
+		push_warning("Cannot write %s: %s" % [SAVE_PATH, error_string(FileAccess.get_open_error())])
+		return
+	f.store_string(JSON.stringify({"boots": count}))

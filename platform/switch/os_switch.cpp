@@ -82,6 +82,18 @@ void OS_Switch::initialize_core() {
 void OS_Switch::initialize() {
 	initialize_core();
 	DisplayServerSwitch::register_switch_driver();
+
+	// user:// and its subfolders live beside the NRO on the SD card.
+	const String user_dir = _user_dir();
+	const char *subdirs[] = { "", "cache", "config", "tmp", "logs" };
+	for (const char *sub : subdirs) {
+		String dir = *sub ? user_dir.path_join(sub) : user_dir;
+		if (DirAccess::make_dir_recursive_absolute(dir) != OK && !DirAccess::dir_exists_absolute(dir)) {
+			user_dir_writable = false;
+			WARN_PRINT(vformat("Cannot create %s; saves and logs are disabled for this session.", dir));
+			break;
+		}
+	}
 }
 
 void OS_Switch::initialize_joypads() {

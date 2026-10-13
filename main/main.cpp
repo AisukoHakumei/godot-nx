@@ -2315,6 +2315,9 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	// This also prevents logs from being created for the editor instance, as feature tags
 	// are disabled while in the editor (even if they should logically apply).
 	GLOBAL_DEF("debug/file_logging/enable_file_logging.pc", true);
+#ifdef SWITCH_ENABLED
+	GLOBAL_DEF("debug/file_logging/enable_file_logging.switch", true); // user://logs/godot.log on the SD card.
+#endif
 	GLOBAL_DEF("debug/file_logging/log_path", "user://logs/godot.log");
 	GLOBAL_DEF(PropertyInfo(Variant::INT, "debug/file_logging/max_log_files", PROPERTY_HINT_RANGE, "0,20,1,or_greater"), 5);
 
