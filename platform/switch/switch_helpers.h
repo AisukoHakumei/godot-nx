@@ -42,6 +42,15 @@ static inline Vector<String> pck_candidates(const String &p_exec_path) {
 	return out;
 }
 
+// Text for the pre-renderer screen shown when no project data is found.
+static inline String missing_pck_message(const String &p_exec_path) {
+	String msg = "No game data found. Looked for:";
+	for (const String &c : pck_candidates(p_exec_path)) {
+		msg += "\n" + c;
+	}
+	return msg;
+}
+
 static inline Vector2 touch_to_window(int p_x, int p_y, const Size2i &p_window) {
 	return Vector2(
 			float(p_x) * float(p_window.x) / float(TOUCH_WIDTH),

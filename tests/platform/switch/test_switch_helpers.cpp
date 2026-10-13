@@ -43,4 +43,11 @@ TEST_CASE("[SwitchHelpers] stick and sample conversion") {
 	CHECK(dst[1] == -32768);
 }
 
+TEST_CASE("[SwitchHelpers] missing pck message lists every candidate") {
+	String msg = SwitchHelpers::missing_pck_message("sdmc:/switch/mygame/mygame.nro");
+	CHECK(msg.contains("sdmc:/switch/mygame/mygame.pck"));
+	CHECK(msg.contains("sdmc:/switch/mygame/mygame.nro.pck"));
+	CHECK(msg.begins_with("No game data found."));
+}
+
 } // namespace TestSwitchHelpers

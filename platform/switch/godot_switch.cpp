@@ -3,6 +3,8 @@
 /**************************************************************************/
 
 #include "os_switch.h"
+#include "switch_helpers.h"
+#include "switch_message.h"
 #include "switch_wrapper.h"
 
 #include "main/main.h"
@@ -53,6 +55,32 @@ int main(int argc, char **argv) {
 
 	OS_Switch os;
 	os.set_argv0(argc > 0 ? argv[0] : nullptr);
+
+	// A 3D game cannot live in the applet memory pool; stop before the renderer tries.
+	if (!switch_is_application_mode()) {
+		switch_show_blocking_message(SWITCH_APPLET_MODE_MESSAGE);
+		return EXIT_SUCCESS;
+	}
+
+	// Explain a missing .pck here, where a console message is still possible.
+	// Plain stdio: Godot's FileAccess is not set up until Main::setup().
+	{
+		bool found = false;
+		for (const String &candidate : SwitchHelpers::pck_candidates(os.get_executable_path())) {
+			FILE *f = fopen(candidate.utf8().get_data(), "rb");
+			if (f) {
+				fclose(f);
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			String msg = SwitchHelpers::missing_pck_message(os.get_executable_path());
+			fprintf(stderr, "%s\n", msg.utf8().get_data());
+			switch_show_blocking_message(msg);
+			return EXIT_FAILURE;
+		}
+	}
 
 	EngineArgs args;
 	args.os = &os;

@@ -6,6 +6,7 @@
 
 #include "switch_helpers.h"
 #include "switch_logger.h"
+#include "switch_message.h"
 #include "switch_wrapper.h"
 
 #include "display_server_switch.h"
@@ -323,4 +324,8 @@ String OS_Switch::get_temp_path() const {
 
 void OS_Switch::alert(const String &p_alert, const String &p_title) {
 	ERR_PRINT(vformat("ALERT: %s: %s", p_title, p_alert));
+	if (DisplayServer::get_singleton() == nullptr) {
+		// Before the renderer owns the window the console can still show it.
+		switch_show_blocking_message(p_title + "\n\n" + p_alert);
+	}
 }
