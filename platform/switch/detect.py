@@ -113,6 +113,7 @@ def configure(env: "SConsEnvironment"):
             "PLATFORM_THREAD_OVERRIDE",
         ]
     )
+    env.Prepend(CPPPATH=["#platform/switch"])
     env.Prepend(
         CPPPATH=[
             os.path.join(root, "libnx", "include"),
