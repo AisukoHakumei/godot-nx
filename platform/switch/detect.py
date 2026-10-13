@@ -53,6 +53,7 @@ def get_flags():
         "use_volk": False,
         "use_sowrap": False,
         "builtin_pcre2_with_jit": False,  # sljit needs mmap, which libnx lacks.
+        "disable_path_overrides": False,  # main() passes the .pck as --main-pack.
         "module_mono_enabled": False,
         "module_openxr_enabled": False,
         "module_webxr_enabled": False,

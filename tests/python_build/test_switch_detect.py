@@ -29,5 +29,6 @@ def test_flags_force_gles_and_arm64():
     assert f["arch"] == "arm64" and f["opengl3"] is True and f["vulkan"] is False
     assert f["use_volk"] is False and f["use_sowrap"] is False
     assert f["builtin_pcre2_with_jit"] is False
+    assert f["disable_path_overrides"] is False  # the template injects --main-pack
     for mod in ["mono", "openxr", "webxr", "camera", "enet", "upnp", "webrtc", "websocket", "mobile_vr", "raycast"]:
         assert f[f"module_{mod}_enabled"] is False

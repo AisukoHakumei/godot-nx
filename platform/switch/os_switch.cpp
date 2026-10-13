@@ -10,6 +10,7 @@
 #include "switch_wrapper.h"
 
 #include "display_server_switch.h"
+#include "ip_switch.h"
 
 #include "main/main.h"
 
@@ -69,6 +70,8 @@ void OS_Switch::initialize_core() {
 	DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_RESOURCES);
 	DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_USERDATA);
 	DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_FILESYSTEM);
+
+	IPSwitch::make_default();
 
 	Vector<Logger *> loggers;
 	loggers.push_back(memnew(SwitchLogger));
