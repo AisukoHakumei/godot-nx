@@ -75,4 +75,12 @@ TEST_CASE("[SwitchHelpers] explicit --main-pack argument wins") {
 	CHECK(SwitchHelpers::main_pack_from_args(0, nullptr) == "");
 }
 
+TEST_CASE("[SwitchHelpers] working directory without a device maps to the SD card") {
+	CHECK(SwitchHelpers::sd_cwd("/") == "sdmc:/");
+	CHECK(SwitchHelpers::sd_cwd("") == "sdmc:/");
+	CHECK(SwitchHelpers::sd_cwd("/switch/godot") == "sdmc:/switch/godot");
+	CHECK(SwitchHelpers::sd_cwd("sdmc:/switch/godot") == "sdmc:/switch/godot");
+	CHECK(SwitchHelpers::sd_cwd("romfs:/") == "romfs:/");
+}
+
 } // namespace TestSwitchHelpers

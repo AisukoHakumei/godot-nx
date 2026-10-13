@@ -11,6 +11,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <dirent.h>
 #include <pthread.h>
 
 // hbloader's main thread has a fixed 1 MiB stack; the engine runs on its own.
@@ -95,6 +96,17 @@ int main(int argc, char **argv) {
 		}
 		if (pck_path.length() == 0) {
 			String msg = SwitchHelpers::missing_pck_message(os.get_executable_path(), os.get_start_cwd());
+			// Diagnostics for emulator launches: what we were given and whether the SD card is visible.
+			msg += "\n\nargv:";
+			for (int i = 0; i < argc; i++) {
+				msg += String(" [") + String::utf8(argv[i]) + "]";
+			}
+			DIR *sd = opendir("sdmc:/");
+			msg += String("\nsdmc:/ readable: ") + (sd ? "yes" : "no");
+			if (sd) {
+				closedir(sd);
+			}
+			msg += "\nPass --main-pack <path> to name the .pck directly.";
 			fprintf(stderr, "%s\n", msg.utf8().get_data());
 			switch_show_blocking_message(msg);
 			return EXIT_FAILURE;

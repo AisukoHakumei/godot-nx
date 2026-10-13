@@ -27,11 +27,7 @@
 
 OS_Switch::OS_Switch() {
 	char buf[1024];
-	if (getcwd(buf, sizeof(buf))) {
-		start_cwd = String::utf8(buf);
-	} else {
-		start_cwd = "sdmc:/";
-	}
+	start_cwd = SwitchHelpers::sd_cwd(getcwd(buf, sizeof(buf)) ? String::utf8(buf) : String());
 
 	struct timespec ts;
 	clock_gettime(CLOCK_MONOTONIC, &ts);

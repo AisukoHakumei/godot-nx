@@ -24,6 +24,18 @@ static inline Size2i window_size_for_docked(bool p_docked) {
 	return p_docked ? Size2i(1920, 1080) : Size2i(1280, 720);
 }
 
+// newlib reports the working directory without a device under some loaders
+// (Eden gives "/"); a path with no device is on the SD card, libnx's default.
+static inline String sd_cwd(const String &p_cwd) {
+	if (p_cwd.is_empty()) {
+		return "sdmc:/";
+	}
+	if (p_cwd.contains(":")) {
+		return p_cwd;
+	}
+	return "sdmc:" + (p_cwd.begins_with("/") ? p_cwd : "/" + p_cwd);
+}
+
 static inline String fallback_executable_path(const String &p_cwd) {
 	return p_cwd.path_join("game.nro");
 }
