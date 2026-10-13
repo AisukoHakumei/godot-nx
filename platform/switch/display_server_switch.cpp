@@ -4,6 +4,7 @@
 
 #include "display_server_switch.h"
 
+#include "audio_driver_switch.h"
 #include "switch_wrapper.h"
 
 #include "core/config/project_settings.h"
@@ -298,6 +299,9 @@ void DisplayServerSwitch::process_events() {
 		focus_event_pending.clear();
 		bool focused = focus_pending_value.is_set();
 		print_verbose(focused ? "Focus gained." : "Focus lost.");
+		if (AudioDriverSwitch::get_singleton()) {
+			AudioDriverSwitch::get_singleton()->set_paused(!focused);
+		}
 		send_window_event(focused ? DisplayServerEnums::WINDOW_EVENT_FOCUS_IN : DisplayServerEnums::WINDOW_EVENT_FOCUS_OUT);
 	}
 

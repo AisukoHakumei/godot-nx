@@ -61,6 +61,19 @@ static inline float stick_axis(int32_t p_raw) {
 	return CLAMP(float(p_raw) / 32767.0f, -1.0f, 1.0f);
 }
 
+// audout: 48 kHz stereo int16. 480 frames = 10 ms = 1920 bytes, held in one
+// 4096-byte block aligned to 0x1000 as the service requires.
+static constexpr int AUDOUT_CHANNELS = 2;
+static constexpr int AUDOUT_BYTES_PER_SAMPLE = 2;
+
+static constexpr int audout_buffer_bytes(int p_frames) {
+	return p_frames * AUDOUT_CHANNELS * AUDOUT_BYTES_PER_SAMPLE;
+}
+
+static constexpr int audout_block_bytes() {
+	return 4096;
+}
+
 // AudioServer hands out int32 frames whose top 16 bits carry the sample.
 static inline void mix_to_int16(const int32_t *p_src, int16_t *p_dst, int p_samples) {
 	for (int i = 0; i < p_samples; i++) {

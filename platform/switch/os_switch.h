@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "audio_driver_switch.h"
+
 #include "core/os/os.h"
 
 class MainLoop;
@@ -12,6 +14,7 @@ class MainLoop;
 // loading, pipes, fork and signals that do not exist on libnx.
 class OS_Switch : public OS {
 	MainLoop *main_loop = nullptr;
+	AudioDriverSwitch audio_driver;
 	String argv0;
 	String start_cwd;
 	bool user_dir_writable = true;

@@ -50,4 +50,9 @@ TEST_CASE("[SwitchHelpers] missing pck message lists every candidate") {
 	CHECK(msg.begins_with("No game data found."));
 }
 
+TEST_CASE("[SwitchHelpers] audout buffer sizing") {
+	CHECK(SwitchHelpers::audout_buffer_bytes(480) == 1920);
+	CHECK(SwitchHelpers::audout_block_bytes() == 4096);
+}
+
 } // namespace TestSwitchHelpers

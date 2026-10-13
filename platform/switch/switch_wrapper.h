@@ -14,6 +14,7 @@
 #define Semaphore NxSemaphore
 #define CondVar NxCondVar
 #define Event NxEvent
+#define AudioDriver NxAudioDriver
 
 #include <switch.h>
 
@@ -23,4 +24,5 @@
 #undef Semaphore
 #undef CondVar
 #undef Event
+#undef AudioDriver
 #undef BIT

@@ -36,6 +36,8 @@ OS_Switch::OS_Switch() {
 	struct timespec ts;
 	clock_gettime(CLOCK_MONOTONIC, &ts);
 	ticks_start = uint64_t(ts.tv_sec) * 1000000ULL + uint64_t(ts.tv_nsec) / 1000ULL;
+
+	AudioDriverManager::add_driver(&audio_driver);
 }
 
 OS_Switch::~OS_Switch() {
