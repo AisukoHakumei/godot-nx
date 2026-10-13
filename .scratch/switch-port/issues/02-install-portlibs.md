@@ -1,7 +1,7 @@
 # Install the devkitPro Switch portlibs
 
 Type: task
-Status: claimed
+Status: resolved
 Blocked by: (none)
 Map: ../map.md
 
@@ -27,3 +27,18 @@ ls /opt/devkitpro/portlibs/switch/lib/libEGL.a /opt/devkitpro/portlibs/switch/li
 ```
 
 Resolve this ticket (next `/wayfinder` session) once the four `.a` files exist; record the `pkg-config --libs` output in the Answer.
+
+## Answer
+
+Done on 2026-10-13 (human ran the `sudo pacman` step; agent did the rest and verified).
+
+Installed packages (system `pacman`, devkitPro `dkp-libs` repo): `switch-mesa 20.1.0-5`, `switch-glad 0.1.27-1`, `switch-libdrm_nouveau 1.0.1-2`, on top of the pre-existing `devkitA64 r30-1`, `devkitA64-gdb 14.1-1`, `libnx 4.12.0-1`, `switch-tools 1.13.1-1` (`elf2nro`, `nacptool`), `switch-examples 20260201-1`, `switch-cmake`, `switch-pkg-config`. Host SCons: `scons 4.11.1` at `~/.local/bin/scons` (installed via `uv tool install scons`; make sure `~/.local/bin` is on `PATH` for build sessions).
+
+Paths later tickets link against:
+- Libraries in `/opt/devkitpro/portlibs/switch/lib/`: `libEGL.a` (22 MB, whole mesa driver), `libglapi.a`, `libGLESv2.a`, `libGLESv1_CM.a`, `libdrm_nouveau.a` (+ `libdrm_nouveaud.a` debug), `libglad.a`.
+- Headers in `/opt/devkitpro/portlibs/switch/include/`: `EGL/`, `GL/`, `GLES/`, `GLES2/`, `GLES3/`, `KHR/`, `glad/glad.h`, `nouveau.h`, `nouveau_drm.h`, `nvif/`.
+- `pkg-config` (`/opt/devkitpro/portlibs/switch/bin/aarch64-none-elf-pkg-config`):
+  - `--cflags egl glesv2` → `-I/opt/devkitpro/portlibs/switch/include -DEGL_NO_X11`
+  - `--libs egl glesv2` → `-L/opt/devkitpro/portlibs/switch/lib -lEGL -ldrm_nouveau -lGLESv2 -lm -lglapi -lm`
+  - `egl.pc` reports `Version: 20.1.0-rc3`.
+- Note for the build-configuration ticket: `-lnx` is not in the pkg-config output and must be appended by the platform (`-specs=/opt/devkitpro/libnx/switch.specs -lnx`), and `libglad.a` is devkitPro's glad, distinct from Godot's `thirdparty/glad`; the GPU-stack research recommends using Godot's glad against `eglGetProcAddress` rather than linking `-lglad`.
